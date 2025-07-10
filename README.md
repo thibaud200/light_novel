@@ -47,6 +47,7 @@ The scripts are divided into two groups:
 ### Group 1: OCR pipeline
 Just launch `orchestrator.py`. It handles:
 
+- `config.py`: it's the config file for the scripts in Group 1
 - `orchestrator.py`: Checks for existing `.txt` files. If already converted (tracked via `.progress`), it skips them.
 - `extract_cbz.py`: Extracts `.cbz` files if your images are archived.
 - `split_large_images.py`: Splits oversized images into smaller ones so Tesseract can process them.
