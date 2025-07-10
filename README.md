@@ -37,6 +37,7 @@ les scripts se décomposent en deux groupes :
   - it will verify if the files are already been converted (*.progress file). if so it will skip it  
   - then take the file and add them to calibre (calibredb)  
   - convert them to epub with the convert command  
-  - modify the metadata from the epub by taking the directory name as the value for the "Series" name and the chapter number for the index of the file  
+  - modify the metadata from the epub by taking the directory name as the value for the "Series" name and the chapter number for the index of the file
+      =>So each file from the same book will be recognise as such and sorted by chapter number in kavita  
   - then save it to the directory specified   
   
