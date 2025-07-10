@@ -6,7 +6,7 @@ first you'll need to install :
   - calibre from the calibre site : https://calibre-ebook.com/fr/download 
   - tesseract from the site : https://github.com/tesseract-ocr/tesseract?tab=readme-ov-file#installing-tesseract or https://tesseract-ocr.github.io/tessdoc/Downloads.html 
 
-Make sure that all the 3 apps above are in the PATH so it's easier 
+Make sure that all the 3 apps above are in the PATH(windows or ather) so it's easier 
  
 Then you need to install the dependencies : 
   For windows :
