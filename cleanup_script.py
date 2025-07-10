@@ -1,20 +1,28 @@
 import os
 import shutil
 import datetime
+import config
 
 # --- CONFIGURATION (DOIT CORRESPONDRE À orchestrator.py) ---
-GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel' # Le répertoire racine de vos livres
+#GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel' # Le répertoire racine de vos livres
+GLOBAL_BOOKS_ROOT_DIR = config.GLOBAL_BOOKS_ROOT_DIR
 
 # Noms des sous-dossiers intermédiaires à supprimer
-PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
-OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
-OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = 'sortieTXT_cleaned'
+#PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+#OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
+#OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = 'sortieTXT_cleaned'
+PROCESSED_IMAGES_SUBFOLDER_NAME = config.PROCESSED_IMAGES_SUBFOLDER_NAME
+OUTPUT_TEXT_SUBFOLDER_NAME = config.OUTPUT_TEXT_SUBFOLDER_NAME
+OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = config.OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME
 
 # Noms des dossiers de sortie finaux (À NE PAS SUPPRIMER)
-FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = 'final_texts'
+#FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = 'final_texts'
+FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = config.FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME
+
 
 # Noms des répertoires à exclure du traitement (DOIT CORRESPONDRE à EXCLUDE_DIR_NAMES dans orchestrator.py)
-EXCLUDE_DIR_NAMES = {"traiter", "script", "backup", "temp"} 
+#EXCLUDE_DIR_NAMES = {"traiter", "script", "backup", "temp"} 
+EXCLUDE_DIR_NAMES = config.EXCLUDE_DIR_NAMES
 
 # Optionnel : Mettez True si vous voulez AUSSI supprimer les dossiers "_unzipped"
 DELETE_UNZIPPED_FOLDERS = False 

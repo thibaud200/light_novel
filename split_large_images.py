@@ -2,6 +2,7 @@ import os
 from PIL import Image
 import datetime
 import argparse
+import config
 
 parser = argparse.ArgumentParser(description="Script pour diviser les grandes images en segments gérables pour l'OCR d'UNE SEULE unité de chapitre.")
 parser.add_argument('--chapter_unit', type=str, required=True,
@@ -9,10 +10,12 @@ parser.add_argument('--chapter_unit', type=str, required=True,
 args = parser.parse_args()
 CHAPTER_UNIT_DIR = args.chapter_unit
 
-PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+#PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+PROCESSED_IMAGES_SUBFOLDER_NAME = config.PROCESSED_IMAGES_SUBFOLDER_NAME
 OUTPUT_SPLIT_IMAGES_BASE_DIR = os.path.join(CHAPTER_UNIT_DIR, PROCESSED_IMAGES_SUBFOLDER_NAME)
 
-MAX_IMAGE_HEIGHT = 10000 # Vous avez confirmé que 10000 fonctionne pour vous.
+#MAX_IMAGE_HEIGHT = 10000 # Vous avez confirmé que 10000 fonctionne pour vous.
+MAX_IMAGE_HEIGHT = config.MAX_IMAGE_HEIGHT
 # NOUVEAU : Extensions d'image cibles pour l'entrée
 TARGET_IMAGE_BASENAME = '1' # Nous allons chercher '1.png', '1.jpg', etc.
 SUPPORTED_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.tif') # Ajouter d'autres extensions si besoin

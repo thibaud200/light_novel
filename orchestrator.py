@@ -6,11 +6,15 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import json
+import config
 
 # --- Chemins des fichiers de log globaux ---
-ORCHESTRATOR_LOG_FILE_PATH = 'D:\\novel\\orchestrator_log.log'
-GLOBAL_ERROR_LOG_FILE_PATH = 'D:\\novel\\global_errors.log'
-PROGRESS_LOG_FILE_PATH = 'D:\\novel\\processed_chapters.progress' 
+#ORCHESTRATOR_LOG_FILE_PATH = 'D:\\novel\\orchestrator_log.log'
+#GLOBAL_ERROR_LOG_FILE_PATH = 'D:\\novel\\global_errors.log'
+#PROGRESS_LOG_FILE_PATH = 'D:\\novel\\processed_chapters.progress'
+ORCHESTRATOR_LOG_FILE_PATH = config.ORCHESTRATOR_LOG_FILE_PATH
+GLOBAL_ERROR_LOG_FILE_PATH = config.GLOBAL_ERROR_LOG_FILE_PATH
+PROGRESS_LOG_FILE_PATH = config.PROGRESS_LOG_FILE_PATH 
 
 # --- Fonction pour journaliser les messages de l'orchestrateur ---
 def log_orchestrator_message(message, level="INFO"):
@@ -57,17 +61,27 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from extract_cbz import extract_cbz_content
 
 # --- Configuration GLOBALE de l'Orchestrateur ---
-GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel'
-SCRIPTS_DIR = 'D:\\novel'
+#GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel'
+#SCRIPTS_DIR = 'D:\\novel'
+GLOBAL_BOOKS_ROOT_DIR = config.GLOBAL_BOOKS_ROOT_DIR
+SCRIPTS_DIR = config.SCRIPTS_DIR
 
-PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
-OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
-OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = 'sortieTXT_cleaned'
-FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = 'final_texts'
+#PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+#OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
+#OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = 'sortieTXT_cleaned'
+#FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = 'final_texts'
 
-EXCLUDE_DIR_NAMES = {"traiter", "script", "backup", "temp", "sortie","scripts", "a traiter", "__pycache__"} 
+#EXCLUDE_DIR_NAMES = {"traiter", "script", "backup", "temp", "sortie","scripts", "a traiter", "__pycache__"} 
 
-MAX_CONCURRENT_CHAPTER_UNITS = 4 
+#MAX_CONCURRENT_CHAPTER_UNITS = 4
+
+PROCESSED_IMAGES_SUBFOLDER_NAME = config.PROCESSED_IMAGES_SUBFOLDER_NAME
+OUTPUT_TEXT_SUBFOLDER_NAME = config.OUTPUT_TEXT_SUBFOLDER_NAME
+OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = config.OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME
+FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = config.FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME
+EXCLUDE_DIR_NAMES = config.EXCLUDE_DIR_NAMES
+
+MAX_CONCURRENT_CHAPTER_UNITS = config.MAX_CONCURRENT_CHAPTER_UNITS 
 
 SPLIT_SCRIPT = os.path.join(SCRIPTS_DIR, 'split_large_images.py')
 OCR_SCRIPT = os.path.join(SCRIPTS_DIR, 'OCR.py')

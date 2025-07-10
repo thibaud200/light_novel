@@ -4,9 +4,11 @@ from PIL import Image
 import pytesseract
 import datetime
 import argparse
+import config
 
 # Configuration spécifique à ce script
-OCR_LANGUAGE = 'eng' # <-- Langue de l'OCR (maintenant 'eng')
+#OCR_LANGUAGE = 'eng' # <-- Langue de l'OCR (maintenant 'eng')
+OCR_LANGUAGE = config.OCR_LANGUAGE
 
 parser = argparse.ArgumentParser(description="Script pour effectuer l'OCR sur les images d'UNE SEULE unité de chapitre.")
 parser.add_argument('--chapter_unit', type=str, required=True,
@@ -14,10 +16,12 @@ parser.add_argument('--chapter_unit', type=str, required=True,
 args = parser.parse_args()
 CHAPTER_UNIT_DIR = args.chapter_unit
 
-PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+#PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
+PROCESSED_IMAGES_SUBFOLDER_NAME = config.PROCESSED_IMAGES_SUBFOLDER_NAME
 BASE_INPUT_DIR = os.path.join(CHAPTER_UNIT_DIR, PROCESSED_IMAGES_SUBFOLDER_NAME)
 
-OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
+#OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
+OUTPUT_TEXT_SUBFOLDER_NAME = config.OUTPUT_TEXT_SUBFOLDER_NAME
 OUTPUT_DIR = os.path.join(CHAPTER_UNIT_DIR, OUTPUT_TEXT_SUBFOLDER_NAME)
 
 
