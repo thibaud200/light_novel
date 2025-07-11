@@ -52,9 +52,17 @@ sudo apt install shapely
 
 The scripts are divided into two groups:  
 1. `orchestrator.py`, `extract_cbz.py`, `split_large_images.py`, `OCR.py`, `clean_ocr_txt.py`  
-   → takes the files and converts them to text files (`*.txt`) so they can be managed by Calibre  
-2. `epub_orchestrator.py`  
+   → takes the files and converts them to text files (`*.txt`) so they can be managed by Calibre
+   To launch the script you just need to go where the scripts are and type :
+   ```bash
+   python orchestrator.py
+   ```
+3. `epub_orchestrator.py`  
    → takes the text files and processes them with Calibre in command-line mode to convert them into EPUB files
+   To launch the script you just need to go where the scripts are and type :
+   ```bash
+   python epub_orchestrator.py
+   ```
 
 ### Group 1: OCR pipeline
 Just launch `orchestrator.py`. It handles:
