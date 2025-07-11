@@ -20,18 +20,30 @@ Make sure these 3 apps are in your system's `PATH` (Windows or other OS) to simp
 ```bash
 pip install Pillow
 pip install pytesseract
+pip install localization
+pip install numpy
+pip install scipy
+pip install shapely
 ```
 
 ** Mac :**
 ```bash
 brew install tesseract
-pip install Pillow
+brew install Pillow
+brew install localization
+brew install numpy
+brew install scipy
+brew install shapely
 ```
 
 ** Linux :**
 ```bash
 sudo apt install tesseract-ocr
-pip install Pillow
+sudo apt install Pillow
+sudo apt install localization
+sudo apt install numpy
+sudo apt install scipy
+sudo apt install shapely
 ```
 
 ---
@@ -69,7 +81,8 @@ Run `epub_orchestrator.py`. It:
 
 ---
 
-## 3. Organisation recommanded for the Folders
+## 3. Organisation recommanded for the Folders where are the files that need to be converted
+The scripts can be in another folder or subfolder : just don't forget to modify le path for it ^^
 
 Make sure the directories are organised like this:
 
