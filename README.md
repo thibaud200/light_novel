@@ -1,5 +1,7 @@
 # light_novel convert Image files to EPUB (with checkpointing and parallel OCR support) (the images files must contain only text to ensure it works)
 
+just a reminder : I have only tested it on Windows environnement, but should work on the others
+
 Python scripts to convert PNG or JPG image files into EPUB files using OCR (Tesseract) and Calibre.  
 It's my first real script in Python — I'm more familiar with Java — so I know it can surely be perfected.
 
