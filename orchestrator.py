@@ -8,10 +8,12 @@ import re
 import json
 import config
 
+# Importation du module de localisation
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from localization.main import get_translator
+_ = get_translator()
+
 # --- Chemins des fichiers de log globaux ---
-#ORCHESTRATOR_LOG_FILE_PATH = 'D:\\novel\\orchestrator_log.log'
-#GLOBAL_ERROR_LOG_FILE_PATH = 'D:\\novel\\global_errors.log'
-#PROGRESS_LOG_FILE_PATH = 'D:\\novel\\processed_chapters.progress'
 ORCHESTRATOR_LOG_FILE_PATH = config.ORCHESTRATOR_LOG_FILE_PATH
 GLOBAL_ERROR_LOG_FILE_PATH = config.GLOBAL_ERROR_LOG_FILE_PATH
 PROGRESS_LOG_FILE_PATH = config.PROGRESS_LOG_FILE_PATH 
@@ -28,11 +30,11 @@ def log_orchestrator_message(message, level="INFO"):
 # --- Fonction pour journaliser les erreurs dans le fichier d'erreurs global ---
 def log_global_error(message, chapter_unit_path="N/A", script_name="N/A", error_details=""):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_message = f"[{timestamp}] [CHAPITRE: {os.path.basename(chapter_unit_path)}] [SCRIPT: {script_name}] ERREUR: {message}\nDetails: {error_details}\n"
+    log_message = f"[{timestamp}] [{_('CHAPITRE')}: {os.path.basename(chapter_unit_path)}] [{_('SCRIPT')}: {script_name}] {_('ERREUR')}: {message}\n{_('Details')}: {error_details}\n"
     os.makedirs(os.path.dirname(GLOBAL_ERROR_LOG_FILE_PATH), exist_ok=True)
     with open(GLOBAL_ERROR_LOG_FILE_PATH, 'a', encoding='utf-8') as f:
         f.write(log_message + '\n')
-    print(f"[GLOBAL_ERROR] {log_message.strip()}")
+    print(f"[{_('GLOBAL_ERROR')}] {log_message.strip()}")
 
 # --- Fonction pour charger les derniers chapitres traités / livres complets ---
 def load_last_processed_chapters():
@@ -42,7 +44,7 @@ def load_last_processed_chapters():
                 # Stocke un dict {book_name: chapter_path ou True pour complet}
                 return json.load(f)
         except json.JSONDecodeError:
-            log_orchestrator_message(f"AVERTISSEMENT: Le fichier de progression '{os.path.basename(PROGRESS_LOG_FILE_PATH)}' est corrompu ou vide. Reprise à zéro pour tous les livres.", "WARNING")
+            log_orchestrator_message(_('PROGRESS_FILE_CORRUPTED').format(os.path.basename(PROGRESS_LOG_FILE_PATH)), "WARNING")
             return {}
     return {}
 
@@ -54,26 +56,15 @@ def save_last_processed_chapters(last_processed_chapters_map):
             json.dump(last_processed_chapters_map, f, indent=4)
         shutil.move(temp_path, PROGRESS_LOG_FILE_PATH)
     except Exception as e:
-        log_orchestrator_message(f"ERREUR CRITIQUE: Échec de la sauvegarde du fichier de progression '{os.path.basename(PROGRESS_LOG_FILE_PATH)}': {e}", "CRITICAL")
+        log_orchestrator_message(_('CRITICAL_ERROR_SAVE_PROGRESS').format(os.path.basename(PROGRESS_LOG_FILE_PATH), e), "CRITICAL")
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from extract_cbz import extract_cbz_content
 
 # --- Configuration GLOBALE de l'Orchestrateur ---
-#GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel'
-#SCRIPTS_DIR = 'D:\\novel'
 GLOBAL_BOOKS_ROOT_DIR = config.GLOBAL_BOOKS_ROOT_DIR
 SCRIPTS_DIR = config.SCRIPTS_DIR
-
-#PROCESSED_IMAGES_SUBFOLDER_NAME = 'images_processed'
-#OUTPUT_TEXT_SUBFOLDER_NAME = 'sortieTXT'
-#OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME = 'sortieTXT_cleaned'
-#FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME = 'final_texts'
-
-#EXCLUDE_DIR_NAMES = {"traiter", "script", "backup", "temp", "sortie","scripts", "a traiter", "__pycache__"} 
-
-#MAX_CONCURRENT_CHAPTER_UNITS = 4
 
 PROCESSED_IMAGES_SUBFOLDER_NAME = config.PROCESSED_IMAGES_SUBFOLDER_NAME
 OUTPUT_TEXT_SUBFOLDER_NAME = config.OUTPUT_TEXT_SUBFOLDER_NAME
@@ -94,7 +85,7 @@ def natsort_key(s):
 # --- Fonction pour exécuter un script enfant (SILENCIEUSE) ---
 def run_child_script(script_path, chapter_unit_path_arg):
     script_name = os.path.basename(script_path)
-    log_orchestrator_message(f"--- Exécution de {script_name} pour '{os.path.basename(chapter_unit_path_arg)}' ---", level="INFO")
+    log_orchestrator_message(_('EXECUTING_SCRIPT').format(script_name, os.path.basename(chapter_unit_path_arg)), level="INFO")
     try:
         command = [sys.executable, script_path, '--chapter_unit', chapter_unit_path_arg]
         
@@ -104,46 +95,46 @@ def run_child_script(script_path, chapter_unit_path_arg):
                                 check=True)
         
         if result.stdout:
-            log_orchestrator_message(f"  Sortie de {script_name}:\n{result.stdout.strip()}", "DEBUG")
+            log_orchestrator_message(_('SCRIPT_OUTPUT').format(script_name, result.stdout.strip()), "DEBUG")
         if result.stderr:
-            log_orchestrator_message(f"  Erreur/Avertissement de {script_name}:\n{result.stderr.strip()}", "WARNING")
+            log_orchestrator_message(_('SCRIPT_WARNING').format(script_name, result.stderr.strip()), "WARNING")
 
-        log_orchestrator_message(f"--- {script_name} terminé avec succès. ---", level="INFO")
+        log_orchestrator_message(_('SCRIPT_SUCCESS').format(script_name), level="INFO")
         return True
     except subprocess.CalledProcessError as e:
-        error_details = f"Code de sortie : {e.returncode}\nSTDERR : {e.stderr.strip() if e.stderr else 'Aucune'}\nSTDOUT : {e.stdout.strip() if e.stdout else 'Aucune'}"
-        log_orchestrator_message(f"!!! ERREUR : {script_name} a échoué pour '{os.path.basename(chapter_unit_path_arg)}' !!!", "ERROR")
-        log_global_error(f"Échec de l'exécution du script.", chapter_unit_path_arg, script_name, error_details)
+        error_details = f"{_('Exit code')} : {e.returncode}\n{_('STDERR')} : {e.stderr.strip() if e.stderr else _('None')}\n{_('STDOUT')} : {e.stdout.strip() if e.stdout else _('None')}"
+        log_orchestrator_message(_('SCRIPT_FAILED').format(script_name, os.path.basename(chapter_unit_path_arg)), "ERROR")
+        log_global_error(_('SCRIPT_EXECUTION_FAILED'), chapter_unit_path_arg, script_name, error_details)
         return False
     except FileNotFoundError:
-        error_details = f"Le fichier du script {script_name} n'a pas été trouvé. Vérifiez le chemin SCRIPTS_DIR."
-        log_orchestrator_message(f"!!! ERREUR CRITIQUE : {script_name} introuvable !!!", "CRITICAL")
+        error_details = _('SCRIPT_FILE_NOT_FOUND').format(script_name)
+        log_orchestrator_message(_('SCRIPT_NOT_FOUND').format(script_name), "CRITICAL")
         log_global_error(error_details, chapter_unit_path_arg, script_name)
         return False
     except Exception as e:
-        error_details = f"Erreur inattendue : {e}"
-        log_orchestrator_message(f"!!! ERREUR INATTENDUE lors de l'exécution de {script_name}: {e} !!!", "CRITICAL")
+        error_details = _('UNEXPECTED_ERROR_DETAILS').format(e)
+        log_orchestrator_message(_('UNEXPECTED_ERROR').format(script_name, e), "CRITICAL")
         log_global_error(error_details, chapter_unit_path_arg, script_name)
         return False
 
 # --- Fonction pour nettoyer les dossiers intermédiaires ---
 def cleanup_intermediate_folders(chapter_unit_path, folders_to_clean_names):
-    log_orchestrator_message(f"  Nettoyage des fichiers intermédiaires pour '{os.path.basename(chapter_unit_path)}'...", level="INFO")
+    log_orchestrator_message(_('CLEANING_INTERMEDIATE_FILES').format(os.path.basename(chapter_unit_path)), level="INFO")
     for folder_name in folders_to_clean_names:
         folder_path = os.path.join(chapter_unit_path, folder_name)
         if os.path.exists(folder_path):
             try:
                 shutil.rmtree(folder_path)
-                log_orchestrator_message(f"    Dossier supprimé : {os.path.basename(folder_path)}", level="INFO")
+                log_orchestrator_message(_('FOLDER_DELETED').format(os.path.basename(folder_path)), level="INFO")
             except Exception as e:
-                log_orchestrator_message(f"    ERREUR lors de la suppression de {os.path.basename(folder_path)}: {e}", "ERROR")
+                log_orchestrator_message(_('ERROR_DELETING_FOLDER').format(os.path.basename(folder_path), e), "ERROR")
         else:
-            log_orchestrator_message(f"    Dossier '{os.path.basename(folder_path)}' non trouvé, pas de nettoyage nécessaire.", level="INFO")
-    log_orchestrator_message(f"  Nettoyage terminé pour '{os.path.basename(chapter_unit_path)}'.", level="INFO")
+            log_orchestrator_message(_('FOLDER_NOT_FOUND').format(os.path.basename(folder_path)), level="INFO")
+    log_orchestrator_message(_('CLEANUP_FINISHED_FOR').format(os.path.basename(chapter_unit_path)), level="INFO")
 
 # --- Fonction : Collecter les fichiers TXT finaux pour un livre ---
 def collect_final_texts(book_root_dir, chapter_units_list):
-    log_orchestrator_message(f"--- Début de la collecte des fichiers TXT finaux pour le livre : {os.path.basename(book_root_dir)} ---", level="INFO")
+    log_orchestrator_message(_('START_COLLECTING_FINAL_TXT').format(os.path.basename(book_root_dir)), level="INFO")
     
     final_output_book_dir = os.path.join(book_root_dir, FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME)
     os.makedirs(final_output_book_dir, exist_ok=True)
@@ -160,44 +151,20 @@ def collect_final_texts(book_root_dir, chapter_units_list):
                     
                     try:
                         shutil.copy2(source_file_path, destination_file_path)
-                        log_orchestrator_message(f"    Copié '{txt_file_name}' de '{os.path.basename(chapter_unit_path)}' vers le dossier final.", level="INFO")
+                        log_orchestrator_message(_('COPIED_TO_FINAL_FOLDER').format(txt_file_name, os.path.basename(chapter_unit_path)), level="INFO")
                         collected_count += 1
                     except Exception as e:
-                        log_orchestrator_message(f"    ERREUR lors de la copie de '{txt_file_name}': {e}", "ERROR")
-                        log_global_error(f"Échec de la copie du fichier TXT nettoyé.", chapter_unit_path, "collect_final_texts", str(e))
+                        log_orchestrator_message(_('ERROR_COPYING_FILE').format(txt_file_name, e), "ERROR")
+                        log_global_error(_('FAILED_TO_COPY_CLEANED_TXT'), chapter_unit_path, "collect_final_texts", str(e))
             
         else:
-            log_orchestrator_message(f"    Dossier '{os.path.basename(cleaned_txt_source_dir)}' non trouvé pour '{os.path.basename(chapter_unit_path)}'.", "WARNING")
+            log_orchestrator_message(_('CLEANED_TXT_FOLDER_NOT_FOUND').format(os.path.basename(cleaned_txt_source_dir), os.path.basename(chapter_unit_path)), "WARNING")
 
-    log_orchestrator_message(f"--- Collecte de {collected_count} fichiers TXT finaux terminée pour le livre : {os.path.basename(book_root_dir)} ---", level="INFO")
+    log_orchestrator_message(_('FINAL_TXT_COLLECTION_FINISHED').format(collected_count, os.path.basename(book_root_dir)), level="INFO")
 
-# --- Fonction pour traiter une seule unité de chapitre de manière séquentielle ---
-#def _process_single_chapter_unit(chapter_unit_path, book_folder_name, last_processed_chapters_map):
-#    message_prefix = f"[Chapitre '{os.path.basename(chapter_unit_path)}' pour '{book_folder_name}']"
-#    log_orchestrator_message(f"{message_prefix} Début du traitement.", "INFO")
-#
-#    split_success = run_child_script(SPLIT_SCRIPT, chapter_unit_path)
-#    if not split_success:
-#        return f"{message_prefix} Arrêt suite à l'échec de la division des images."
-#
-#    ocr_success = run_child_script(OCR_SCRIPT, chapter_unit_path)
-#    if not ocr_success:
-#        return f"{message_prefix} Arrêt suite à l'échec de l'OCR."
-#    
-#    cleanup_intermediate_folders(chapter_unit_path, [PROCESSED_IMAGES_SUBFOLDER_NAME])
-#
-#    clean_success = run_child_script(CLEAN_SCRIPT, chapter_unit_path)
-#    if not clean_success:
-#        return f"{message_prefix} Arrêt suite à l'échec du nettoyage du texte."
-#
-#    # Mettre à jour le fichier de progression pour ce livre
-#    last_processed_chapters_map[book_folder_name] = chapter_unit_path
-#    save_last_processed_chapters(last_processed_chapters_map)
-#
-#    return f"{message_prefix} Traitement de l'unité de chapitre terminé."
 def _process_single_chapter_unit(chapter_unit_path, book_folder_name, last_processed_chapters_map):
-    message_prefix = f"[Chapitre '{os.path.basename(chapter_unit_path)}' pour '{book_folder_name}']"
-    log_orchestrator_message(f"{message_prefix} Début du traitement.", "INFO")
+    message_prefix = f"[{_('CHAPITRE')}: '{os.path.basename(chapter_unit_path)}' {_('pour')} '{book_folder_name}']"
+    log_orchestrator_message(_('PROCESSING_STARTED').format(message_prefix), "INFO")
 
     ### DÉBUT DE LA NOUVELLE LOGIQUE DE VÉRIFICATION ###
     chapter_name = os.path.basename(chapter_unit_path)
@@ -235,54 +202,54 @@ def _process_single_chapter_unit(chapter_unit_path, book_folder_name, last_proce
                     break
     
     if final_text_found:
-        log_orchestrator_message(f"{message_prefix} Fichier(s) TXT final(aux) déjà présent(s) dans '{FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME}'. Saut du traitement complet.", "INFO")
+        log_orchestrator_message(_('FINAL_TXT_FOUND').format(message_prefix, FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME), "INFO")
         # Mettre à jour le fichier de progression pour ce livre si ce chapitre est traité
         last_processed_chapters_map[book_folder_name] = chapter_unit_path
         save_last_processed_chapters(last_processed_chapters_map)
-        return f"{message_prefix} Traitement de l'unité de chapitre ignoré (fichier final déjà présent)."
+        return _('PROCESSING_SKIPPED_FINAL').format(message_prefix)
 
     # 2. Vérifier dans sortieTXT_cleaned
     cleaned_txt_dir = os.path.join(chapter_unit_path, OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME)
     if has_txt_files(cleaned_txt_dir):
-        log_orchestrator_message(f"{message_prefix} Fichier(s) nettoyé(s) déjà présent(s) dans '{OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME}'. Saut du traitement complet.", "INFO")
+        log_orchestrator_message(_('CLEANED_FILES_FOUND').format(message_prefix, OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME), "INFO")
         # Mettre à jour le fichier de progression pour ce livre si ce chapitre est traité
         last_processed_chapters_map[book_folder_name] = chapter_unit_path
         save_last_processed_chapters(last_processed_chapters_map)
-        return f"{message_prefix} Traitement de l'unité de chapitre ignoré (fichier nettoyé déjà présent)."
+        return _('PROCESSING_SKIPPED_CLEANED').format(message_prefix)
 
     # 3. Vérifier dans sortieTXT
     output_txt_dir = os.path.join(chapter_unit_path, OUTPUT_TEXT_SUBFOLDER_NAME)
     if has_txt_files(output_txt_dir):
-        log_orchestrator_message(f"{message_prefix} Fichier(s) OCR brut(s) déjà présent(s) dans '{OUTPUT_TEXT_SUBFOLDER_NAME}'. Reprise à partir de l'étape de nettoyage.", "INFO")
+        log_orchestrator_message(_('RAW_OCR_FOUND_RESUME').format(message_prefix, OUTPUT_TEXT_SUBFOLDER_NAME), "INFO")
         clean_success = run_child_script(CLEAN_SCRIPT, chapter_unit_path)
         if not clean_success:
-            return f"{message_prefix} Arrêt suite à l'échec du nettoyage du texte."
+            return _('STOP_CLEAN_FAIL').format(message_prefix)
         # Après un nettoyage réussi, on nettoie les dossiers intermédiaires (ici sortieTXT)
         cleanup_intermediate_folders(chapter_unit_path, [OUTPUT_TEXT_SUBFOLDER_NAME])
         # Puis on met à jour le progrès
         last_processed_chapters_map[book_folder_name] = chapter_unit_path
         save_last_processed_chapters(last_processed_chapters_map)
-        return f"{message_prefix} Traitement de l'unité de chapitre terminé (reprise du nettoyage)."
+        return _('PROCESSING_RESUMED_CLEANING').format(message_prefix)
 
     ### FIN DE LA NOUVELLE LOGIQUE DE VÉRIFICATION ###
 
     # Si aucun fichier final n'est trouvé, procéder au traitement complet (split -> ocr -> clean)
-    log_orchestrator_message(f"{message_prefix} Aucun fichier de sortie trouvé. Démarrage du traitement complet.", "INFO")
+    log_orchestrator_message(_('NO_OUTPUT_FOUND').format(message_prefix), "INFO")
 
     split_success = run_child_script(SPLIT_SCRIPT, chapter_unit_path)
     if not split_success:
-        return f"{message_prefix} Arrêt suite à l'échec de la division des images."
+        return _('STOP_SPLIT_FAIL').format(message_prefix)
 
     ocr_success = run_child_script(OCR_SCRIPT, chapter_unit_path)
     if not ocr_success:
-        return f"{message_prefix} Arrêt suite à l'échec de l'OCR."
+        return _('STOP_OCR_FAIL').format(message_prefix)
     
     # Nettoyage des images traitées après OCR, car elles ne sont plus nécessaires
     cleanup_intermediate_folders(chapter_unit_path, [PROCESSED_IMAGES_SUBFOLDER_NAME])
 
     clean_success = run_child_script(CLEAN_SCRIPT, chapter_unit_path)
     if not clean_success:
-        return f"{message_prefix} Arrêt suite à l'échec du nettoyage du texte."
+        return _('STOP_CLEAN_FAIL').format(message_prefix)
 
     # Nettoyage des fichiers OCR bruts après nettoyage
     cleanup_intermediate_folders(chapter_unit_path, [OUTPUT_TEXT_SUBFOLDER_NAME])
@@ -291,12 +258,12 @@ def _process_single_chapter_unit(chapter_unit_path, book_folder_name, last_proce
     last_processed_chapters_map[book_folder_name] = chapter_unit_path
     save_last_processed_chapters(last_processed_chapters_map)
 
-    return f"{message_prefix} Traitement de l'unité de chapitre terminé."
+    return _('PROCESSING_FINISHED').format(message_prefix)
 
 # --- Processus principal ---
-log_orchestrator_message("--- Démarrage de l'Orchestrateur de traitement de livres (PARALLELISE) ---", level="INFO")
-log_orchestrator_message(f"Répertoire global des livres : {GLOBAL_BOOKS_ROOT_DIR}", level="INFO")
-log_orchestrator_message(f"Unités de chapitre traitées en parallèle : {MAX_CONCURRENT_CHAPTER_UNITS}", level="INFO")
+log_orchestrator_message(_('ORCHESTRATOR_START'), level="INFO")
+log_orchestrator_message(_('GLOBAL_BOOKS_ROOT_DIR_MSG').format(GLOBAL_BOOKS_ROOT_DIR), level="INFO")
+log_orchestrator_message(_('MAX_CONCURRENT_CHAPTER_UNITS_MSG').format(MAX_CONCURRENT_CHAPTER_UNITS), level="INFO")
 
 
 # Nettoyer les logs précédents au démarrage
@@ -311,14 +278,14 @@ if os.path.exists(PROGRESS_LOG_FILE_PATH + ".tmp"):
 # Charger les derniers chapitres traités
 last_processed_chapters_by_book = load_last_processed_chapters()
 if last_processed_chapters_by_book:
-    log_orchestrator_message(f"Chargement des points de reprise pour {len(last_processed_chapters_by_book)} livres.", "INFO")
+    log_orchestrator_message(_('LOADING_RESUME_POINTS').format(len(last_processed_chapters_by_book)), "INFO")
     for book_name, progress_status in last_processed_chapters_by_book.items():
         if progress_status is True:
-            log_orchestrator_message(f"  Livre '{book_name}': Marqué comme ENTIÈREMENT TRAITÉ.", "INFO")
+            log_orchestrator_message(_('BOOK_MARKED_AS_PROCESSED').format(book_name), "INFO")
         else:
-            log_orchestrator_message(f"  Livre '{book_name}': Dernier chapitre traité '{os.path.basename(progress_status)}'", "INFO")
+            log_orchestrator_message(_('LAST_PROCESSED_CHAPTER').format(book_name, os.path.basename(progress_status)), "INFO")
 else:
-    log_orchestrator_message("Aucun point de reprise trouvé. Démarrage complet du traitement.", "INFO")
+    log_orchestrator_message(_('NO_RESUME_POINT_FOUND'), "INFO")
 
 
 all_futures = []
@@ -330,22 +297,18 @@ with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CHAPTER_UNITS) as executor:
         book_folder_path = os.path.join(GLOBAL_BOOKS_ROOT_DIR, book_folder_name)
 
         if not os.path.isdir(book_folder_path):
-            log_orchestrator_message(f"IGNORÉ (élément racine non-répertoire) : '{book_folder_name}'.", "INFO")
+            log_orchestrator_message(_('IGNORED_NON_DIRECTORY').format(book_folder_name), "INFO")
             continue
 
         if book_folder_name.lower() in EXCLUDE_DIR_NAMES:
-            log_orchestrator_message(f"IGNORÉ : Le répertoire '{book_folder_name}' est exclu par nom.", "INFO")
+            log_orchestrator_message(_('IGNORED_EXCLUDED_DIR').format(book_folder_name), "INFO")
             continue
 
         # --- NOUVELLE LOGIQUE : Sauter le livre entier si marqué comme COMPLET ---
         if last_processed_chapters_by_book.get(book_folder_name) is True:
             log_orchestrator_message(f"\n========================================================", level="INFO")
-            log_orchestrator_message(f"Livre '{book_folder_name}' marqué comme ENTIÈREMENT TRAITÉ. IGNORE LE PARCOURS DES CHAPITRES.", "INFO")
+            log_orchestrator_message(_('BOOK_MARKED_AS_PROCESSED_SKIP').format(book_folder_name), "INFO")
             log_orchestrator_message(f"========================================================", level="INFO")
-            # Ajout du livre à book_chapter_units_map pour la phase de post-traitement (collecte et nettoyage)
-            # si tous les chapitres étaient déjà complets. On doit lui fournir la liste complète des chapitres
-            # pour qu'il puisse faire le nettoyage final même s'ils n'ont pas été traités dans cette session.
-            # Pour cela, il faut qu'on liste les chapitres une fois pour cette situation.
             chapter_units_for_this_book_temp = []
             for item_in_book_folder_name in sorted(os.listdir(book_folder_path), key=natsort_key):
                 item_in_book_folder_path = os.path.join(book_folder_path, item_in_book_folder_name)
@@ -354,14 +317,14 @@ with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CHAPTER_UNITS) as executor:
                     OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME.lower(), FINAL_COLLECTED_TEXTS_SUBFOLDER_NAME.lower(),
                     '__pycache__'}):
                     chapter_units_for_this_book_temp.append(item_in_book_folder_path)
-                elif item_in_book_folder_name.lower().endswith('.cbz'): # Les CBZ sont aussi des unités de chapitre
-                     chapter_units_for_this_book_temp.append(item_in_book_folder_path) # Leur extraction sera sautée par le run_child_script si le CBZ a déjà été traité.
-            book_chapter_units_map[book_folder_path] = chapter_units_for_this_book_temp # Important pour le post-traitement
-            continue # Passe au livre suivant
+                elif item_in_book_folder_name.lower().endswith('.cbz'):
+                     chapter_units_for_this_book_temp.append(item_in_book_folder_path)
+            book_chapter_units_map[book_folder_path] = chapter_units_for_this_book_temp
+            continue
 
         log_orchestrator_message(f"\n========================================================", level="INFO")
-        log_orchestrator_message(f"Début de la détection pour le livre/dossier : {book_folder_name}", level="INFO")
-        log_orchestrator_message(f"Chemin du dossier du livre : {book_folder_path}", level="INFO")
+        log_orchestrator_message(_('START_DETECTION_BOOK').format(book_folder_name), level="INFO")
+        log_orchestrator_message(_('BOOK_FOLDER_PATH').format(book_folder_path), level="INFO")
         log_orchestrator_message(f"========================================================", level="INFO")
 
         chapter_units_for_this_book = []
@@ -377,91 +340,82 @@ with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CHAPTER_UNITS) as executor:
             }.union(EXCLUDE_DIR_NAMES)
 
             if item_in_book_folder_name.lower() in all_excluded_items:
-                log_orchestrator_message(f"  IGNORÉ (sous-dossier de système ou exclu) : '{item_in_book_folder_name}'", "INFO")
+                log_orchestrator_message(_('IGNORED_SYSTEM_SUBFOLDER').format(item_in_book_folder_name), "INFO")
                 continue
             
             if not os.path.isdir(item_in_book_folder_path) and not item_in_book_folder_name.lower().endswith('.cbz'):
-                log_orchestrator_message(f"  IGNORÉ (fichier non CBZ dans dossier livre) : '{item_in_book_folder_name}'", "INFO")
+                log_orchestrator_message(_('IGNORED_NON_CBZ_FILE').format(item_in_book_folder_name), "INFO")
                 continue
             
             if os.path.isdir(item_in_book_folder_path):
                 chapter_units_for_this_book.append(item_in_book_folder_path)
             
             elif os.path.isfile(item_in_book_folder_path) and item_in_book_folder_name.lower().endswith('.cbz'):
-                log_orchestrator_message(f"  Détecté un fichier CBZ dans le dossier livre : '{item_in_book_folder_name}'. Tentative d'extraction...", "INFO")
+                log_orchestrator_message(_('CBZ_DETECTED').format(item_in_book_folder_name), "INFO")
                 extracted_chapter_unit_path = extract_cbz_content(item_in_book_folder_path, book_folder_path)
                 if extracted_chapter_unit_path:
                     chapter_units_for_this_book.append(extracted_chapter_unit_path)
-                    log_orchestrator_message(f"  CBZ '{item_in_book_folder_name}' extrait et son dossier ajouté à la liste de traitement.", "INFO")
+                    log_orchestrator_message(_('CBZ_EXTRACTED').format(item_in_book_folder_name), "INFO")
                 else:
-                    log_orchestrator_message(f"  ÉCHEC d'extraction du CBZ '{item_in_book_folder_name}'. Ce chapitre sera ignoré.", "ERROR")
+                    log_orchestrator_message(_('CBZ_EXTRACTION_FAILED').format(item_in_book_folder_name), "ERROR")
             
         chapter_units_for_this_book.sort(key=natsort_key)
 
         if not chapter_units_for_this_book:
-            log_orchestrator_message(f"AUCUNE unité de chapitre (dossier ou CBZ) trouvée pour le livre : '{book_folder_name}'.", "WARNING")
+            log_orchestrator_message(_('NO_CHAPTER_UNIT_FOUND').format(book_folder_name), "WARNING")
             continue
 
         book_chapter_units_map[book_folder_path] = chapter_units_for_this_book
         
         # --- LOGIQUE DE REPRISE : Filtrer les chapitres déjà traités pour ce livre ---
         chapters_to_submit_for_book = []
-        last_processed_status_for_book = last_processed_chapters_by_book.get(book_folder_name) # Peut être un chemin ou True
+        last_processed_status_for_book = last_processed_chapters_by_book.get(book_folder_name)
 
-        if last_processed_status_for_book is True: # Ce cas ne devrait plus être atteint ici, mais en sécurité
-            log_orchestrator_message(f"  Livre '{book_folder_name}' est déjà marqué comme ENTIÈREMENT TRAITÉ. (Double vérification).", "INFO")
-            chapters_to_submit_for_book = [] # Aucun chapitre à soumettre
-        elif last_processed_status_for_book: # C'est un chemin de dernier chapitre traité
-            log_orchestrator_message(f"  Point de reprise détecté pour '{book_folder_name}': '{os.path.basename(last_processed_status_for_book)}'.", "INFO")
+        if last_processed_status_for_book is True:
+            log_orchestrator_message(_('DOUBLE_CHECK_PROCESSED').format(book_folder_name), "INFO")
+            chapters_to_submit_for_book = []
+        elif last_processed_status_for_book:
+            log_orchestrator_message(_('RESUME_POINT_DETECTED').format(book_folder_name, os.path.basename(last_processed_status_for_book)), "INFO")
             found_last_processed = False
             for chapter_path in chapter_units_for_this_book:
                 if found_last_processed:
                     chapters_to_submit_for_book.append(chapter_path)
                 elif chapter_path == last_processed_status_for_book:
                     found_last_processed = True
-                    log_orchestrator_message(f"    Reprise APRES le chapitre '{os.path.basename(chapter_path)}'.", "INFO")
+                    log_orchestrator_message(_('RESUMING_AFTER_CHAPTER').format(os.path.basename(chapter_path)), "INFO")
                 else:
-                    log_orchestrator_message(f"    IGNORÉ (déjà traité) : '{os.path.basename(chapter_path)}'.", "DEBUG")
+                    log_orchestrator_message(_('IGNORED_ALREADY_PROCESSED').format(os.path.basename(chapter_path)), "DEBUG")
             
-            if not found_last_processed and chapters_to_submit_for_book: 
-                # Cas où le dernier chapitre n'est plus trouvé MAIS il y a des chapitres à soumettre
-                # Cela signifie que le point de reprise est corrompu ou le chapitre a été déplacé
-                log_orchestrator_message(f"AVERTISSEMENT : Le dernier chapitre traité '{os.path.basename(last_processed_status_for_book)}' n'a pas été trouvé dans la liste actuelle des chapitres de '{book_folder_name}'. Reprise à partir du premier chapitre non traité (si existant).", "WARNING")
-                # Pas besoin de remettre chapter_units_for_this_book entier, car chapters_to_submit_for_book contient déjà la suite
+            if not found_last_processed and chapters_to_submit_for_book:
+                log_orchestrator_message(_('RESUME_POINT_NOT_FOUND').format(os.path.basename(last_processed_status_for_book), book_folder_name), "WARNING")
             elif not found_last_processed and not chapters_to_submit_for_book:
-                 # Cas où le dernier chapitre n'est plus trouvé ET il n'y a plus de chapitres après.
-                 # Cela peut arriver si le livre est considéré comme fini mais n'avait pas le flag True.
-                 log_orchestrator_message(f"AVERTISSEMENT : Point de reprise '{os.path.basename(last_processed_status_for_book)}' non trouvé et plus de chapitres à traiter. Livre potentiellement incomplet.", "WARNING")
+                 log_orchestrator_message(_('RESUME_POINT_NOT_FOUND_NO_MORE').format(os.path.basename(last_processed_status_for_book)), "WARNING")
 
-        else: # Aucun point de reprise, traiter tout le livre
+        else:
             chapters_to_submit_for_book = chapter_units_for_this_book
 
 
         if not chapters_to_submit_for_book:
-            log_orchestrator_message(f"  Tous les chapitres de '{book_folder_name}' ont déjà été traités ou aucun nouveau chapitre à soumettre.", "INFO")
+            log_orchestrator_message(_('ALL_CHAPTERS_ALREADY_PROCESSED').format(book_folder_name), "INFO")
         else:
-            log_orchestrator_message(f"Soumission de {len(chapters_to_submit_for_book)} unités de chapitre pour '{book_folder_name}' au pool de traitement...", "INFO")
+            log_orchestrator_message(_('SUBMITTING_CHAPTERS').format(len(chapters_to_submit_for_book), book_folder_name), "INFO")
             for chapter_unit_path in chapters_to_submit_for_book:
                 future = executor.submit(_process_single_chapter_unit, chapter_unit_path, book_folder_name, last_processed_chapters_by_book)
                 all_futures.append(future)
 
-    log_orchestrator_message("\n--- Toutes les tâches de traitement de chapitre soumises. Attente de la complétion... ---", "INFO")
+    log_orchestrator_message(_('ALL_TASKS_SUBMITTED'), "INFO")
     for future in as_completed(all_futures):
         result_message = future.result()
         log_orchestrator_message(result_message, "INFO")
 
-log_orchestrator_message("\n--- Démarrage de la phase de post-traitement des livres ---", "INFO")
+log_orchestrator_message(_('START_POST_PROCESSING'), "INFO")
 for book_folder_path, chapter_units_list in sorted(book_chapter_units_map.items(), key=lambda item: natsort_key(os.path.basename(item[0]))):
     book_folder_name = os.path.basename(book_folder_path)
     
-    # Vérifier si le livre a été entièrement traité avant de collecter et nettoyer
-    # Logique mise à jour pour utiliser le flag True du fichier de progression
     is_book_marked_as_complete = last_processed_chapters_by_book.get(book_folder_name) is True
 
     if is_book_marked_as_complete:
-        log_orchestrator_message(f"\n--- LIVRE '{book_folder_name}' est marqué comme ENTIÈREMENT TRAITÉ. Post-traitement (collecte/nettoyage) relancé pour assurer la propreté. ---", "INFO")
-        # Même si marqué complet, on relance collecte/nettoyage au cas où un nettoyage précédent aurait échoué.
-        # On n'a pas besoin de revérifier tous les chapitres car le flag True nous dit que c'est bon.
+        log_orchestrator_message(_('BOOK_IS_PROCESSED').format(book_folder_name), "INFO")
         collect_final_texts(book_folder_path, chapter_units_list)
 
         for chapter_unit_path_for_cleanup in chapter_units_list:
@@ -470,11 +424,9 @@ for book_folder_path, chapter_units_list in sorted(book_chapter_units_map.items(
                 cleanup_intermediate_folders(chapter_unit_path_for_cleanup, ["."])
 
         log_orchestrator_message(f"\n========================================================", level="INFO")
-        log_orchestrator_message(f"Traitement complet du livre : {book_folder_name}", level="INFO")
+        log_orchestrator_message(_('BOOK_COMPLETE_PROCESSING_MSG').format(book_folder_name), level="INFO")
         log_orchestrator_message(f"========================================================", level="INFO")
     else:
-        # Si le livre n'est PAS marqué comme complet (soit pas du tout, soit a un point de reprise)
-        # On vérifie si TOUS les chapitres ont été traités dans cette session
         all_chapters_processed_in_this_run = True
         for chapter_path in chapter_units_list:
             cleaned_txt_source_dir = os.path.join(chapter_path, OUTPUT_CLEANED_TEXT_SUBFOLDER_NAME)
@@ -483,7 +435,7 @@ for book_folder_path, chapter_units_list in sorted(book_chapter_units_map.items(
                 break
         
         if all_chapters_processed_in_this_run:
-            log_orchestrator_message(f"\n--- LIVRE '{book_folder_name}' : Tous les chapitres traités dans cette session. Phase de post-traitement démarrée. ---", "INFO")
+            log_orchestrator_message(_('BOOK_POST_PROCESSING_STARTED').format(book_folder_name), "INFO")
             collect_final_texts(book_folder_path, chapter_units_list)
 
             for chapter_unit_path_for_cleanup in chapter_units_list:
@@ -492,16 +444,15 @@ for book_folder_path, chapter_units_list in sorted(book_chapter_units_map.items(
                     cleanup_intermediate_folders(chapter_unit_path_for_cleanup, ["."])
 
             log_orchestrator_message(f"\n========================================================", level="INFO")
-            log_orchestrator_message(f"Traitement complet du livre : {book_folder_name}", level="INFO")
+            log_orchestrator_message(_('BOOK_COMPLETE_PROCESSING_MSG').format(book_folder_name), level="INFO")
             log_orchestrator_message(f"========================================================", level="INFO")
-            # MARQUER LE LIVRE COMME COMPLET APRÈS LA COLLECTE ET LE NETTOYAGE FINAL
             last_processed_chapters_by_book[book_folder_name] = True 
-            save_last_processed_chapters(last_processed_chapters_by_book) # Sauvegarder l'état complet
+            save_last_processed_chapters(last_processed_chapters_by_book)
         else:
-            log_orchestrator_message(f"\n--- LIVRE '{book_folder_name}' INCOMPLET. Phase de post-traitement ignorée. ---", "WARNING")
+            log_orchestrator_message(_('BOOK_INCOMPLETE_SKIP').format(book_folder_name), "WARNING")
 
 
-log_orchestrator_message("\n--- Tous les livres détectés et traités ont été terminés ---", level="INFO")
-log_orchestrator_message(f"Vérifiez le fichier de log principal '{ORCHESTRATOR_LOG_FILE_PATH}' et les logs spécifiques dans chaque unité de chapitre.", level="INFO")
-log_orchestrator_message(f"Les erreurs sont consignées dans '{GLOBAL_ERROR_LOG_FILE_PATH}'.", "INFO")
-log_orchestrator_message(f"Les points de reprise sont dans '{PROGRESS_LOG_FILE_PATH}'.", "INFO")
+log_orchestrator_message(_('ALL_BOOKS_FINISHED'), level="INFO")
+log_orchestrator_message(_('CHECK_LOG_FILES').format(ORCHESTRATOR_LOG_FILE_PATH, ""), level="INFO")
+log_orchestrator_message(_('ERRORS_LOGGED').format(GLOBAL_ERROR_LOG_FILE_PATH), "INFO")
+log_orchestrator_message(_('RESUME_POINTS_LOGGED').format(PROGRESS_LOG_FILE_PATH), "INFO")

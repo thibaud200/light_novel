@@ -1,11 +1,11 @@
 # config.py
 
 # --- Global path for the files of the Orchestrator ---
-ORCHESTRATOR_LOG_FILE_PATH = 'D:\\novel\\orchestrator_log.log'
-GLOBAL_ERROR_LOG_FILE_PATH = 'D:\\novel\\global_errors.log'
-PROGRESS_LOG_FILE_PATH = 'D:\\novel\\processed_chapters.progress'
+ORCHESTRATOR_LOG_FILE_PATH = 'D:\\novel\\scripts\\orchestrator_log.log'
+GLOBAL_ERROR_LOG_FILE_PATH = 'D:\\novel\\scripts\\global_errors.log'
+PROGRESS_LOG_FILE_PATH = 'D:\\novel\\scripts\\processed_chapters.progress'
 GLOBAL_BOOKS_ROOT_DIR = 'D:\\novel'
-SCRIPTS_DIR = 'D:\\novel'
+SCRIPTS_DIR = 'D:\\novel\\scripts'
 
 # --- Paramèters for the OCR and the treatement for the image ---
 OCR_LANGUAGE = 'eng'
