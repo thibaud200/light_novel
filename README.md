@@ -5,6 +5,14 @@ just a reminder : I have only tested it on Windows environnement, but should wor
 Python scripts to convert PNG or JPG image files into EPUB files using OCR (Tesseract) and Calibre.  
 It's my first real script in Python — I'm more familiar with Java — so I know it can surely be perfected.
 
+##  Future Roadmap
+### GUI Improvements
+   - EPUB Button: Add a button to the GUI to launch the epub_orchestrator.py script directly after the OCR phase.(most likeliy a new tab)
+
+### script Improvement
+   - Centralized Configuration: Integrate the settings of epub_orchestrator.py into a dedicated configuration file, making all paths and tools configurable via the interface.
+   - Full Localization: Apply the same localization system (get_translator()) to the epub_orchestrator.py script to make its messages translatable.
+
 ---
 
 ## 1. Prérequities
