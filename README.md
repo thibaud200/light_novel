@@ -88,8 +88,29 @@ Run `epub_orchestrator.py`. It:
 - Saves final EPUBs to the configured directory
 
 ---
+## 3. Configuration Interface (Optional)
+In addition to launching via the command line, you can use the graphical interface to configure and launch the orchestrator.py script in a user-friendly manner. The interface is an independent script located in the  subdirectory "interface".
 
-## 3. Organisation recommanded for the Folders where are the files that need to be converted
+### Interface Features
+- Ease of Use : Modify access paths and settings without having to touch the code.
+
+- Localization : The interface is capable of automatically detecting your system's language and displaying messages in French or English(English by defaut if no local language find).
+
+- Project Organization : The interface and its localization files are grouped in an interface/ subdirectory to maintain a clean project tree.
+
+### Using the Interface
+1. Launch the Interface :
+Execute the script from the project root, specifying its relative path :
+```bash
+Bash
+
+python interface/ConvertImageToTXT.py
+```
+2. Configure and Launch :
+The interface will open, allowing you to modify the settings. Once your changes are made, you can either save them or launch the orchestrator process directly.
+
+---
+## 4. Organisation recommanded for the Folders where are the files that need to be converted
 The scripts can be in another folder or subfolder : just don't forget to modify le path for it ^^
 
 Make sure the directories are organised like this:
