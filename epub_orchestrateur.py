@@ -6,18 +6,17 @@ import subprocess
 from pathlib import Path
 
 # === CONFIGURATION ===
-GLOBAL_BOOKS_ROOT_DIR = r"D:\\novel"
+GLOBAL_BOOKS_ROOT_DIR = r"D:\\novel\\scripts"
 CALIBRE_LIBRARY_PATH = r"C:\\Users\\thibs\\Bibliothèque calibre"
 CALIBREDB_PATH = r"C:\\Program Files\\Calibre2\\calibredb.exe"
 EBOOK_CONVERT_PATH = r"C:\\Program Files\\Calibre2\\ebook-convert.exe"
 EBOOK_META_PATH = r"C:\\Program Files\\Calibre2\\ebook-meta.exe"
-GLOBAL_EPUB_OUTPUT_DIR = os.path.join(GLOBAL_BOOKS_ROOT_DIR, "Sortie")
+GLOBAL_EPUB_OUTPUT_DIR = os.path.join(GLOBAL_BOOKS_ROOT_DIR, "sortie")
 
 FINAL_TEXTS_SUBFOLDER_NAME = "final_texts"
-EXPORT_EPUB_SUBFOLDER_NAME = "exports_epub"
 EXCLUDE_BOOK_FOLDERS = {"traiter", "script", "backup", "temp", "__pycache__"}
 LOG_FILE = os.path.join(GLOBAL_BOOKS_ROOT_DIR, "calibre_automation.log")
-PROGRESS_FILE = os.path.join(GLOBAL_BOOKS_ROOT_DIR, ".progress.json")
+PROGRESS_FILE = os.path.join(GLOBAL_BOOKS_ROOT_DIR, "calibre_processed_books.progress")
 
 # === LOGGING ===
 def log(msg, level="INFO"):
@@ -42,7 +41,7 @@ def save_progress(progress):
         json.dump(progress, f, indent=2)
     shutil.move(temp, PROGRESS_FILE)
 
-# === COMMANDES ===
+# === COMMANDS ===
 def run_cmd(cmd):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -106,7 +105,7 @@ def extract_book_id(output):
             return match.group(1)
     return None
 
-# === TRAITEMENT PRINCIPAL ===
+# === Main TREATEMENT ===
 def process_book(book_path):
     book_name = os.path.basename(book_path)
     log(f"\n--- Traitement du livre: {book_name} ---")
@@ -185,7 +184,7 @@ def process_book(book_path):
             success += 1
             done_epubs.add(epub_name)
 
-            # Sauvegarde immédiate de la progression après succès
+            # immediate save after success
             progress[book_name] = {
                 "success": sorted(done_epubs),
                 "fail": sorted(failed_epubs),
