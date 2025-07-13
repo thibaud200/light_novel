@@ -9,6 +9,7 @@ import re
 # --- Script Configuration ---
 url_file = "link_novels.txt"
 error_report_file = "errors_rapport.txt"
+root_dir="C:\\novel"
 
 # --- Nom du fichier journal pour cette exécution ---
 # Le nom du fichier journal sera unique pour chaque exécution du script
@@ -47,7 +48,7 @@ for url in urls_to_process:
             # Extraction du nom du roman pour le chemin de sortie
             parsed_url = urlparse(url)
             novel_name = os.path.splitext(os.path.basename(parsed_url.path.rstrip('/')))[0]
-            output_path = os.path.join('C:\\novel', novel_name)
+            output_path = os.path.join(root_dir, novel_name)
             
             # Construire la commande
             command = [
