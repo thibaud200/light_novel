@@ -3,6 +3,9 @@
 ========================================================================================================================================================================================
 # lightnovel-crawler directory : exclusively works with lightnovel-crawler
 
+Basicaly lightnovel-crawler allows you to get novels on at a time. you have to relaunch the app each time
+The process_novel.py script allows you to provide a file with a list of URL in it so that you can get multiples novels in one go(automaticaly)
+
 ## 1. Prérequities
 
 1. **Install the following tools**:
