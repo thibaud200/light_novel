@@ -6,9 +6,9 @@ from urllib.parse import urlparse
 import time
 import re
 
-# --- Configuration du script ---
-url_file = "liens_romans.txt"
-error_report_file = "rapport_erreurs.txt"
+# --- Script Configuration ---
+url_file = "link_novels.txt"
+error_report_file = "errors_rapport.txt"
 
 # --- Nom du fichier journal pour cette exécution ---
 # Le nom du fichier journal sera unique pour chaque exécution du script

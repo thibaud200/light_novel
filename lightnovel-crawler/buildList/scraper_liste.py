@@ -4,12 +4,12 @@ from bs4 import BeautifulSoup
 import os
 from urllib.parse import urlparse
 
-# Le nom du fichier où les liens seront sauvegardés
-output_file = "liens_romans.txt"
+# The file name where the links are saved
+output_file = "link_novels.txt"
 
 def is_valid_url(url_string):
     """
-    Vérifie si une chaîne de caractères est une URL valide.
+    Checks if the string provided is a valid URL.
     """
     try:
         result = urlparse(url_string)
@@ -19,9 +19,9 @@ def is_valid_url(url_string):
 
 def get_links_from_url(list_url):
     """
-    Télécharge une page web et en extrait tous les liens de romans.
+    Download a web page and extrait the links of novels.
     """
-    print(f"Extraction des liens depuis {list_url}...")
+    print(f"Extraction of the links from {list_url}...")
     try:
         response = requests.get(list_url)
         response.raise_for_status()
@@ -37,12 +37,12 @@ def get_links_from_url(list_url):
         return links_set
 
     except requests.exceptions.RequestException as e:
-        print(f"Erreur de connexion pour {list_url}: {e}")
+        print(f"Connexion error for {list_url}: {e}")
         return set()
 
 def update_link_file(new_links):
     """
-    Met à jour le fichier de liens en évitant les doublons.
+    Updates the file with the links and checks for redondancies.
     """
     existing_links = set()
     if os.path.exists(output_file):
@@ -57,7 +57,7 @@ def update_link_file(new_links):
         for link in sorted_links:
             f.write(f"{link}\n")
 
-    print(f"{len(new_links)} liens extraits. Le fichier contient maintenant {len(all_links)} liens uniques.")
+    print(f"{len(new_links)} extract links. The files contains {len(all_links)} unique links.")
 
 def process_file(file_path):
     """
@@ -76,20 +76,20 @@ def process_file(file_path):
             update_link_file(all_extracted_links)
 
     except FileNotFoundError:
-        print(f"Erreur: Le fichier '{file_path}' est introuvable.")
+        print(f"Error: The file '{file_path}' wasn't found.")
         sys.exit(1)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Veuillez fournir une URL ou le chemin d'un fichier en argument.")
+        print("Please give a URL or a file in argument.")
         print("Exemple (URL): python scraper_liste.py https://www.wuxiabox.com/list/...")
-        print("Exemple (Fichier): python scraper_liste.py urls_a_traiter.txt")
+        print("Exemple (File): python scraper_liste.py urls_a_traiter.txt")
         sys.exit(1)
 
     argument = sys.argv[1]
     
-    # Vérifier si l'argument est une URL ou un fichier
+    # Checks if the argument is a URL or a file
     if is_valid_url(argument):
         extracted_links = get_links_from_url(argument)
         if extracted_links:
@@ -97,5 +97,5 @@ if __name__ == "__main__":
     elif os.path.isfile(argument):
         process_file(argument)
     else:
-        print(f"Erreur: L'argument '{argument}' n'est ni une URL valide ni un fichier existant.")
+        print(f"Error: The argument '{argument}' is not a valid URL nor a valid existing.")
         sys.exit(1)
