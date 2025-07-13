@@ -1,4 +1,33 @@
-# light_novel convert Image files to EPUB (with checkpointing and parallel OCR support) (the images files must contain only text to ensure it works)
+      - lightnovel-crawler directory : contains Scripts exclusively works with lightnovel-crawler
+      - ConvertImageToEpub directory : light_novel convert Image files to EPUB
+========================================================================================================================================================================================
+# lightnovel-crawler directory : exclusively works with lightnovel-crawler
+
+The script in the sub directory "checkNovel" allows you to check if there are chapters missing for a novel => gives you an output file that can be used directly with the "process_novels.py" script
+The scripts in the "builtList" directory :
+   - scraper_liste.py : creates a file with the URL of each novel he finds in the global URLs provided in the file given in input to the script as an argument
+        - INPUT : list_pages.txt (as an exemple) << needs to be vreated manualy
+        - OUTPUT: link_novels.txt (as an exemple)
+The script "process_novel.py" needs a file that contains a list of URL for each novel you want
+      - INPUT : link_novels.txt << the one created with the script scraper_liste.py of you don't want to create ir manualy
+           - reads each line(1 URL pre line) in the file provided an calls for each line in the file lightnovel-crawler in silent mode
+      
+      here are the details of parameters setting in the script
+     ```bash
+          command = [
+                lnc_executable,               
+                '--suppress',                 #for silent mode
+                #'-ll',                       #for level of the log '-l'=>warn / -ll'=>info 
+                '--log-file', log_file,       # Utilisation du nom de fichier correct
+                '--output', output_path,      # output directory
+                '--format', 'epub',           # output format
+                '--all',                      # '--all'=> all chapter requested
+                '--source', url,              # the URL provided
+                '--multi'                     # '--multi'=>if you want multiple files
+      ```
+========================================================================================================================================================================================
+
+# ConvertImageToEpub directory : light_novel convert Image files to EPUB (with checkpointing and parallel OCR support) (the images files must contain only text to ensure it works)
 
 just a reminder : I have only tested it on Windows environnement, but should work on the others
 
