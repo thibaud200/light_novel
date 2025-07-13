@@ -3,6 +3,18 @@
 ========================================================================================================================================================================================
 # lightnovel-crawler directory : exclusively works with lightnovel-crawler
 
+## 1. Prérequities
+
+1. **Install the following tools**:
+    - [Python v3.10.11]([https://www.python.org/downloads/](https://www.python.org/downloads/release/python-31011/)) << the crawler seems to have install/running problems with the latests version of python
+            - best way to do it, is to prepare a virtual environnement for it :
+      ** Windows :**
+      ```bash
+      py -3.10 -m venv lightnovel_310_env
+      lightnovel_310_env\Scripts\activate
+      pip install -U lightnovel-crawler
+      ```
+      
 The script in the sub directory "checkNovel" allows you to check if there are chapters missing for a novel => gives you an output file that can be used directly with the "process_novels.py" script
 The scripts in the "builtList" directory :
    - scraper_liste.py : creates a file with the URL of each novel he finds in the global URLs provided in the file given in input to the script as an argument
@@ -10,7 +22,7 @@ The scripts in the "builtList" directory :
         - OUTPUT: link_novels.txt (as an exemple)
 The script "process_novel.py" needs a file that contains a list of URL for each novel you want
       - INPUT : link_novels.txt << the one created with the script scraper_liste.py of you don't want to create ir manualy
-           - reads each line(1 URL pre line) in the file provided an calls for each line in the file lightnovel-crawler in silent mode
+           - reads each line(1 URL per line) in the file provided than calls lightnovel-crawler in silent mode for each line in the file
       
       here are the details of parameters setting in the script
      ```bash
