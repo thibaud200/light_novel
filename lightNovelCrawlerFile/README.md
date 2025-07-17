@@ -21,3 +21,5 @@ Go and see here for the app and the details https://github.com/dipu-bd/lightnove
       pip install -r requirements.txt
       ```
  and then of course get the files from https://github.com/dipu-bd/lightnovel-crawler
+ 
+ test de PR
