@@ -63,4 +63,49 @@ options:
                         Optional. If specified, chapters not covered by boundaries (in 'volume' mode) or not included
                         in the filter (in 'chapter' mode) will be merged into a single, separate EPUB file. By
                         default, they are ignored and a warning is displayed.
-``` 
+```
+
+## 2. How the scripts work
+
+The script takes parameters some are mandatory others are not:  
+
+1. Mandatory :
+   - `-i, --input_dir INPUT_DIR`
+   - `-m, --mode {chapter,volume}`
+   - `-b, --boundaries BOUNDARIES` (if mode is volume)
+   - `-sb, --simple-boundaries SIMPLE_BOUNDARIES` (if mode is volume)
+     
+2. Optional  
+   - `-u, --merge_unspecified` (if mode is volume)
+   - `-o, --output_dir OUTPUT_DIR` (if mode is volume)
+
+     
+3. commande line example
+   
+   ### 1. Volume mode
+   
+   ```bash
+   python convertJson.py -i "C:\novel\sortie\Green Skin" -m "volume" -b "{1: [(1, 100)], 2: [(101, 150)], 3: [(201, 350)]}"
+   ```
+This command takes the parameter after the -i to set the input directory. 
+The -m parameter here is set to 'volume' so it need a range parameter here -b. 
+Here the -b param here in the : 
+     - '1: [(1, 100)]' parameter portion will take the chapters from 1 to 100 and merge them into volume 1 
+     - '2: [(101, 150)]' parameter portion will take the chapters from 101 to 150 and merge them into volume 2 
+     - ....and so on
+in this example because there's also this : 3: [(201, 350)] then the chapter beetween 151 to 200 will not be integrated / converted into epub if you want them in a epub then you need to add the `-u`
+    - the u parameter will tell the script to take all chapters that are not in the specified range to be taken into account and merge them into a seperate epub file 
+
+```bash
+python convertJson.py -i "C:\novel\sortie\Green Skin" -m "volume" -sb "50"
+```
+This command takes the parameter after the -i to set the input directory. 
+The -m parameter here is set to 'volume' so it need a range parameter here -b. 
+Here the -sb param here will tell to the script to take by order every 50 chapters and merge them into a volume
+
+   ### 2. Chapter mode
+
+ ```bash
+ python convertJson.py -i "C:\novel\sortie\Green Skin" -m "chapter"
+ ```
+this will convert each json file into an epub file
