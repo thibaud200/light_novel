@@ -281,7 +281,7 @@ def main():
     meta_filepath = os.path.join(input_dir, "meta.json")
     book_metadata = load_book_metadata(meta_filepath)
     
-    # Charger tous les IDs de chapitres avant de calculer les bornes
+    # Load all chapter IDs before calculating
     chapters_by_id = {}
     for root, _, files in os.walk(input_dir):
         for filename in files:
@@ -316,9 +316,6 @@ def main():
 
         if not sorted_ids:
             print(f"{YELLOW}Warning: No chapters found to apply simple boundaries. No volumes will be created.{RESET}")
-            # Ne pas appeler parser.error ici si le but est de juste ne rien créer
-            # On peut sortir ou laisser le reste du script gérer un volume_chapter_boundaries vide
-            # return 
         
         current_volume = 1
         for i in range(0, len(sorted_ids), chapters_per_volume):
@@ -331,7 +328,7 @@ def main():
         
         print(f"{GREEN}Simple boundaries generated: {volume_chapter_boundaries}{RESET}")
 
-    else: # Si --simple-boundaries n'est pas utilisé, alors --boundaries doit être analysé
+    else: # if --simple-boundaries is not used, then --boundaries must be used
         try:
             volume_chapter_boundaries = eval(args.boundaries)
             assert isinstance(volume_chapter_boundaries, dict)
@@ -340,12 +337,9 @@ def main():
         except Exception as e:
             print(f"{RED}Invalid boundaries format for -b: {e}{RESET}")
             return
-    
-    # Vérification finale pour le mode volume si des bornes ont été déterminées
+
     if mode == "volume" and not volume_chapter_boundaries and not merge_unspecified:
-        # Permettre que volume_chapter_boundaries soit vide si merge_unspecified est vrai
-        # pour capturer tous les chapitres dans un seul fichier
-        if not (args.boundaries == "{}" and args.simple_boundaries is None): # Si l'utilisateur n'a pas explicitement demandé un merge d'unspecified sans bornes
+        if not (args.boundaries == "{}" and args.simple_boundaries is None):
              parser.error("In 'volume' mode, no chapter boundaries could be determined.")
 
     processed_ids = set()
@@ -353,14 +347,13 @@ def main():
     if mode == "chapter":
         print(f"\n{GREEN}Mode: chapter (1 EPUB per file){RESET}")
         ids_to_process = []
-        if volume_chapter_boundaries: # Si des bornes sont spécifiées même en mode chapitre, les utiliser comme filtre
+        if volume_chapter_boundaries:
             for ranges in volume_chapter_boundaries.values():
                 for start, end in ranges:
                     ids_to_process.extend([i for i in sorted_ids if start <= i <= end])
             ids_to_process = sorted(set(ids_to_process))
-        else: # Sinon, traiter tous les chapitres
+        else:
             ids_to_process = sorted_ids
-
 
         for chap_id in ids_to_process:
             chapter = chapters_by_id[chap_id]
@@ -376,10 +369,9 @@ def main():
                 if not chapters:
                     continue
                 
-                # Définition des variables de série pour le mode volume
                 series_name_val = book_metadata.get('series_name')
-                series_position_val = str(vol) # Le numéro de volume est la position (string)
-                calibre_series_index_val = float(vol) # Calibre préfère un float
+                series_position_val = str(vol) # The volume number is the position (string)
+                calibre_series_index_val = float(vol) # Calibre preferes a float
 
                 book_obj, cover_html_page = create_epub_book(
                     identifier=f"vol_{vol}_{start}_{end}",
