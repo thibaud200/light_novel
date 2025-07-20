@@ -1,4 +1,5 @@
-      - ConvertImageToEpub directory : light_novel convert Image files to EPUB
+      - ConvertImageToEpub directory : light_novel convert Image files to EPUBcd 
+      - convertJson directory : python script that works exclusivaly after you got the json files with lightnovel_crowler see : https://github.com/dipu-bd/lightnovel-crawler for the crawler
 ========================================================================================================================================================================================
 
 # ConvertImageToEpub directory : light_novel convert Image files to EPUB (with checkpointing and parallel OCR support) (the images files must contain only text to ensure it works)
