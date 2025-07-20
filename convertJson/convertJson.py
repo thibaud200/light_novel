@@ -13,6 +13,7 @@ RESET = "\033[0m"
 
 # --- Utility functions for EPUB creation ---
 
+# Renvoie maintenant un tuple (book, cover_html_page)
 def create_epub_book(identifier, title, author, synopsis, series_name, series_position, calibre_series_index, category, language, cover_path):
     book = epub.EpubBook()
     book.set_identifier(identifier)
@@ -99,29 +100,38 @@ def create_epub_book(identifier, title, author, synopsis, series_name, series_po
             elif cover_path.lower().endswith(('.gif')):
                 mime_type = "image/gif"
 
-            cover_img_filename = "cover." + mime_type.split('/')[-1]
-            cover_item = epub.EpubImage(uid="cover_image", file_name=cover_img_filename, media_type=mime_type, content=cover_data)
-            book.add_item(cover_item)
-            
+            cover_img_filename_in_epub = "cover_image." + mime_type.split('/')[-1] # Nom de fichier plus spécifique pour l'image
+            cover_item = epub.EpubImage(uid="cover_image_unique_uid", file_name=cover_img_filename_in_epub, media_type=mime_type, content=cover_data)
+            # set_cover ajoute l'image au livre et au manifeste avec la propriété cover-image.
+            # Il n'y a plus d'appel add_item(cover_item) séparé ici, ce qui a réglé l'erreur de duplication de l'image.
             book.set_cover(cover_item.file_name, cover_data) 
+            
+            # Le chemin de l'image dans le HTML est cover_item.file_name.
+            image_html_src = cover_item.file_name
+            
+            # --- CORRECTION DE LA PAGE HTML DE COUVERTURE ---
+            # Utilisation d'un nom de fichier plus unique pour la page HTML de couverture
+            cover_html_filename = "cover_page.xhtml" 
             
             cover_html_content = f"""
             <?xml version='1.0' encoding='utf-8'?>
             <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
                 <head>
-                    <title>Cover</title>
+                    <title>{title if title else 'Cover'}</title>
                     <style type="text/css">
                         body {{ margin: 0; padding: 0; text-align: center; }}
                         img {{ max-width: 100%; height: auto; }}
                     </style>
                 </head>
                 <body>
-                    <img src="../Images/{cover_item.file_name}" alt="Cover Image" />
+                    <img src="{image_html_src}" alt="Cover Image" />
                 </body>
             </html>
             """
-            cover_html_page = epub.EpubHtml(uid="cover_html", file_name="cover.xhtml", content=cover_html_content)
-            cover_html_page.properties = "rendition:layout-pre-paginated"
+            # Crée l'objet EpubHtml pour la page de couverture avec le nouveau nom de fichier/UID
+            cover_html_page = epub.EpubHtml(uid="cover_html_unique_uid", file_name=cover_html_filename, content=cover_html_content)
+            
+            # Ajoute explicitement la page HTML de couverture au livre
             book.add_item(cover_html_page)
 
             print(f"{GREEN}  Cover image '{os.path.basename(cover_path)}' and cover HTML page added.{RESET}")
@@ -129,7 +139,6 @@ def create_epub_book(identifier, title, author, synopsis, series_name, series_po
             print(f"{RED}  Error adding cover image '{os.path.basename(cover_path)}': {e}{RESET}")
     elif cover_path:
         print(f"{YELLOW}  Warning: Cover file not found at '{cover_path}'. Skipping cover.{RESET}")
-
 
     return book, cover_html_page
 
@@ -141,7 +150,7 @@ def create_single_chapter_epub(chapter_data, output_path, book_metadata, cover_p
     series_position_val = chapter_data['id']
     calibre_series_index_val = float(chapter_data['id'])
 
-    book_obj, cover_html_page = create_epub_book(
+    book_obj, cover_html_page = create_epub_book( # Déstructuration du tuple retourné
         identifier=identifier,
         title=epub_file_name_without_ext,
         author=book_metadata.get('book_author'),
@@ -160,7 +169,7 @@ def create_single_chapter_epub(chapter_data, output_path, book_metadata, cover_p
 
     spine_items = ['nav']
     if cover_html_page:
-        spine_items.append(cover_html_page)
+        spine_items.append(cover_html_page) # Ajout de la page de couverture en début de spine
 
     spine_items.append(c)
 
@@ -184,8 +193,7 @@ def load_book_metadata(meta_filepath):
         "book_synopsis":None,
         "series_name": None,
         "book_category": None,
-        "book_language": None,
-        "book_cover": None
+        "book_language": None
     }
 
     if os.path.exists(meta_filepath):
@@ -206,7 +214,6 @@ def load_book_metadata(meta_filepath):
                     synopsis = novel_data.get('summary')
                     tags = novel_data.get('tags')
                     language = novel_data.get('language')
-                    cover = novel_data.get('cover')
 
                 book_metadata['book_full_title'] = title
                 book_metadata['book_author'] = authors[0] if isinstance(authors, list) and authors else None
@@ -214,7 +221,6 @@ def load_book_metadata(meta_filepath):
                 book_metadata['series_name'] = title
                 book_metadata['book_category'] = tags
                 book_metadata['book_language'] = language
-                book_metadata['book_cover'] = cover
 
                 print(f"{GREEN}Book metadata loaded from meta.json:{RESET}")
                 for key, value in book_metadata.items():
@@ -247,7 +253,7 @@ def main():
              "Required in 'volume' mode, mutually exclusive with -sb.")
     group.add_argument("-sb", "--simple-boundaries", type=int, help="Number of chapters per volume. \n"
              "Ex: \"-sb 50\" (means 50 chapters per volume). \n"
-             "Required in 'volume' mode, mutually exclusive with -b.") # Ajout de la nouvelle option
+             "Required in 'volume' mode, mutually exclusive with -b.")
 
     parser.add_argument("-u", "--merge_unspecified", action="store_true", help="Optional. If specified, chapters not covered by boundaries \n"
              "(in 'volume' mode) or not included in the filter (in 'chapter' mode) \n"
@@ -260,14 +266,11 @@ def main():
     mode = args.mode
     merge_unspecified = args.merge_unspecified
 
-    # parent dir for input_dir
-    #parent_dir = os.path.dirname(os.path.abspath(input_dir))
-    input_dir = args.input_dir
-    
+    # Correction: La recherche de la couverture doit se faire dans input_dir
     possible_cover_names = ['cover.jpg', 'cover.png', 'cover.jpeg']
     cover_filepath = None
     for name in possible_cover_names:
-        temp_path = os.path.join(input_dir, name)
+        temp_path = os.path.join(input_dir, name) #
         if os.path.exists(temp_path):
             cover_filepath = temp_path
             break
@@ -275,13 +278,14 @@ def main():
     if cover_filepath:
         print(f"{GREEN}Detected cover file: {cover_filepath}{RESET}")
     else:
-        print(f"{YELLOW}No cover file found in parent directory ({input_dir}). Covers will not be added.{RESET}")
+        # Correction du message d'avertissement pour refléter la recherche dans input_dir
+        print(f"{YELLOW}No cover file found in input directory ({input_dir}). Covers will not be added.{RESET}")
 
 
     meta_filepath = os.path.join(input_dir, "meta.json")
     book_metadata = load_book_metadata(meta_filepath)
     
-    # Load all chapter IDs before calculating
+    # Charger tous les IDs de chapitres avant de calculer les bornes
     chapters_by_id = {}
     for root, _, files in os.walk(input_dir):
         for filename in files:
@@ -338,9 +342,13 @@ def main():
             print(f"{RED}Invalid boundaries format for -b: {e}{RESET}")
             return
 
-    if mode == "volume" and not volume_chapter_boundaries and not merge_unspecified:
-        if not (args.boundaries == "{}" and args.simple_boundaries is None):
-             parser.error("In 'volume' mode, no chapter boundaries could be determined.")
+    if mode == "volume": # Ajout de la vérification de cohérence des options
+        if args.boundaries == "{}" and args.simple_boundaries is None:
+            parser.error("In 'volume' mode, either --boundaries (-b) or --simple-boundaries (-sb) must be provided.")
+    elif mode == "chapter": # Ajout de la vérification de cohérence des options
+        if args.boundaries != "{}" or args.simple_boundaries is not None:
+            parser.error("In 'chapter' mode, --boundaries (-b) or --simple-boundaries (-sb) are not applicable. "
+                          "They are only used for merging chapters into volumes.")
 
     processed_ids = set()
 
@@ -373,7 +381,7 @@ def main():
                 series_position_val = str(vol) # The volume number is the position (string)
                 calibre_series_index_val = float(vol) # Calibre preferes a float
 
-                book_obj, cover_html_page = create_epub_book(
+                book_obj, cover_html_page = create_epub_book( # Déstructuration du tuple retourné
                     identifier=f"vol_{vol}_{start}_{end}",
                     title=f"{book_metadata.get('book_full_title')} - Volume {vol} ({start}-{end})",
                     author=book_metadata.get('book_author'),
@@ -388,7 +396,7 @@ def main():
                 items = []
                 
                 if cover_html_page:
-                    items.append(cover_html_page)
+                    items.append(cover_html_page) # Ajout de la page de couverture en début de items
 
                 for chap in chapters:
                     c = epub.EpubHtml(title=chap["title"], file_name=f"chap_{chap['id']}.xhtml", lang=book_metadata.get('book_language'))
@@ -397,7 +405,7 @@ def main():
                     items.append(c)
                     processed_ids.add(chap['id'])
                 
-                book_obj.toc = tuple(items[1:]) if cover_html_page else tuple(items)
+                book_obj.toc = tuple(items[1:]) if cover_html_page else tuple(items) # Le TOC ne commence généralement pas par la page de couverture
                 book_obj.spine = ['nav'] + items
                 book_obj.add_item(epub.EpubNcx())
                 book_obj.add_item(epub.EpubNav())
@@ -416,7 +424,7 @@ def main():
             series_position_val = None # Pas de position spécifique pour les non-spécifiés
             calibre_series_index_val = None
 
-            book_obj, cover_html_page = create_epub_book(
+            book_obj, cover_html_page = create_epub_book( # Déstructuration du tuple retourné
                 identifier="unspecified_chapters",
                 title=f"{book_metadata.get('book_full_title')} - Unspecified Chapters",
                 author=book_metadata.get('book_author'),
