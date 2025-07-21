@@ -1,3 +1,6 @@
+import subprocess
+import sys
+import importlib.util
 import os
 import json
 import re
@@ -11,6 +14,32 @@ GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RESET = "\033[0m"
 
+def check_and_install_dependencies():
+    """
+    Vérifie si les dépendances nécessaires sont installées et les installe si ce n'est pas le cas.
+    """
+    required_packages = {
+        "ebooklib": "EbookLib", # format: {module_name: package_name_for_pip}
+        "lxml": "lxml"          # lxml is an EbookLib dependancy
+    }
+
+    print("Checking and installing dependancies if needed...")
+
+    for module_name, package_name in required_packages.items():
+        if importlib.util.find_spec(module_name) is None:
+            print(f"The dependancy '{package_name}' ({module_name}) was not found. Installation en progress...")
+            try:
+                # Execute pip for package install
+                # sys.executable est le chemin vers l'interpréteur Python en cours d'exécution
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+                print(f"'{package_name}' installed with success.")
+            except subprocess.CalledProcessError as e:
+                print(f"ERREUR : Impossible to install '{package_name}'. Check manual install with 'pip install {package_name}'.")
+                print(f"Error details : {e}")
+                sys.exit(1)
+        else:
+            print(f"The dependancy '{package_name}' ({module_name}) is already installed.")
+
 # --- Utility functions for EPUB creation ---
 
 # Renvoie maintenant un tuple (book, cover_html_page)
@@ -22,57 +51,45 @@ def create_epub_book(identifier, title, author, synopsis, series_name, series_po
         book.set_title(title)
     if author:
         book.add_author(author)
-    
     if synopsis:
         book.add_metadata('DC', 'description', synopsis)
-    
     if series_name and series_position is not None and calibre_series_index is not None:
         book.add_metadata(
-            'OPF',
-            'meta',
-            series_name,
+            'OPF', 'meta', series_name,
             {
                 'property': 'belongs-to-collection',
                 'id': 'series_id'
             }
         )
         book.add_metadata(
-            'OPF',
-            'meta',
-            'series',
+            'OPF', 'meta', 'series',
             {
                 'refines': '#series_id',
                 'property': 'collection-type'
             }
         )
         book.add_metadata(
-            'OPF',
-            'meta',
-            str(series_position),
+            'OPF', 'meta', str(series_position),
             {
                 'refines': '#series_id',
                 'property': 'group-position'
             }
         )
         book.add_metadata(
-            None,
-            'meta',
-            '',
+            None, 'meta', '',
             {
                 'name': 'calibre:series',
                 'content': series_name
             }
         )
         book.add_metadata(
-            None,
-            'meta',
-            '',
+            None, 'meta', '',
             {
                 'name': 'calibre:series_index',
                 'content': str(calibre_series_index)
             }
         )
-    
+
     if category:
         if isinstance(category, list):
             for cat in category:
@@ -83,7 +100,7 @@ def create_epub_book(identifier, title, author, synopsis, series_name, series_po
 
     if language:
         book.add_metadata('DC', 'language', language)
-    
+
     cover_item = None
     cover_html_page = None
 
@@ -91,48 +108,9 @@ def create_epub_book(identifier, title, author, synopsis, series_name, series_po
         try:
             with open(cover_path, 'rb') as cover_file:
                 cover_data = cover_file.read()
-            
-            mime_type = "image/jpeg"
-            if cover_path.lower().endswith(('.png')):
-                mime_type = "image/png"
-            elif cover_path.lower().endswith(('.jpg', '.jpeg')):
-                mime_type = "image/jpeg"
-            elif cover_path.lower().endswith(('.gif')):
-                mime_type = "image/gif"
 
-            cover_img_filename_in_epub = "cover_image." + mime_type.split('/')[-1] # Nom de fichier plus spécifique pour l'image
-            cover_item = epub.EpubImage(uid="cover_image_unique_uid", file_name=cover_img_filename_in_epub, media_type=mime_type, content=cover_data)
-            # set_cover ajoute l'image au livre et au manifeste avec la propriété cover-image.
-            # Il n'y a plus d'appel add_item(cover_item) séparé ici, ce qui a réglé l'erreur de duplication de l'image.
-            book.set_cover(cover_item.file_name, cover_data) 
-            
-            # Le chemin de l'image dans le HTML est cover_item.file_name.
-            image_html_src = cover_item.file_name
-            
-            # --- CORRECTION DE LA PAGE HTML DE COUVERTURE ---
-            # Utilisation d'un nom de fichier plus unique pour la page HTML de couverture
-            cover_html_filename = "cover_page.xhtml" 
-            
-            cover_html_content = f"""
-            <?xml version='1.0' encoding='utf-8'?>
-            <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
-                <head>
-                    <title>{title if title else 'Cover'}</title>
-                    <style type="text/css">
-                        body {{ margin: 0; padding: 0; text-align: center; }}
-                        img {{ max-width: 100%; height: auto; }}
-                    </style>
-                </head>
-                <body>
-                    <img src="{image_html_src}" alt="Cover Image" />
-                </body>
-            </html>
-            """
-            # Crée l'objet EpubHtml pour la page de couverture avec le nouveau nom de fichier/UID
-            cover_html_page = epub.EpubHtml(uid="cover_html_unique_uid", file_name=cover_html_filename, content=cover_html_content)
-            
-            # Ajoute explicitement la page HTML de couverture au livre
-            book.add_item(cover_html_page)
+            # set_cover adds the image to the book and to the manifest.
+            book.set_cover("cover.jpg", cover_data) 
 
             print(f"{GREEN}  Cover image '{os.path.basename(cover_path)}' and cover HTML page added.{RESET}")
         except Exception as e:
@@ -150,7 +128,7 @@ def create_single_chapter_epub(chapter_data, output_path, book_metadata, cover_p
     series_position_val = chapter_data['id']
     calibre_series_index_val = float(chapter_data['id'])
 
-    book_obj, cover_html_page = create_epub_book( # Déstructuration du tuple retourné
+    book_obj, cover_html_page = create_epub_book(
         identifier=identifier,
         title=epub_file_name_without_ext,
         author=book_metadata.get('book_author'),
@@ -278,14 +256,14 @@ def main():
     if cover_filepath:
         print(f"{GREEN}Detected cover file: {cover_filepath}{RESET}")
     else:
-        # Correction du message d'avertissement pour refléter la recherche dans input_dir
+        # Warning message if no cover file found in the input_dir
         print(f"{YELLOW}No cover file found in input directory ({input_dir}). Covers will not be added.{RESET}")
 
 
     meta_filepath = os.path.join(input_dir, "meta.json")
     book_metadata = load_book_metadata(meta_filepath)
     
-    # Charger tous les IDs de chapitres avant de calculer les bornes
+    # Load of the chapters ID before calcuating the boundaries
     chapters_by_id = {}
     for root, _, files in os.walk(input_dir):
         for filename in files:
@@ -308,7 +286,7 @@ def main():
 
     sorted_ids = sorted(chapters_by_id.keys())
     
-    # --- Calcul des bornes (volume_chapter_boundaries) ---
+    # --- boundaries (volume_chapter_boundaries) ---
     volume_chapter_boundaries = {}
     if args.simple_boundaries is not None:
         if mode == "chapter":
@@ -342,10 +320,10 @@ def main():
             print(f"{RED}Invalid boundaries format for -b: {e}{RESET}")
             return
 
-    if mode == "volume": # Ajout de la vérification de cohérence des options
+    if mode == "volume": # Check coherence of options
         if args.boundaries == "{}" and args.simple_boundaries is None:
             parser.error("In 'volume' mode, either --boundaries (-b) or --simple-boundaries (-sb) must be provided.")
-    elif mode == "chapter": # Ajout de la vérification de cohérence des options
+    elif mode == "chapter": # Check coherence of options
         if args.boundaries != "{}" or args.simple_boundaries is not None:
             parser.error("In 'chapter' mode, --boundaries (-b) or --simple-boundaries (-sb) are not applicable. "
                           "They are only used for merging chapters into volumes.")
@@ -460,4 +438,5 @@ def main():
     print("\nProcess complete.")
 
 if __name__ == "__main__":
+    check_and_install_dependencies()
     main()
