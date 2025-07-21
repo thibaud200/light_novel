@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import json
 import config
+import importlib.util
 
 # Importation du module de localisation
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -17,6 +18,36 @@ _ = get_translator()
 ORCHESTRATOR_LOG_FILE_PATH = config.ORCHESTRATOR_LOG_FILE_PATH
 GLOBAL_ERROR_LOG_FILE_PATH = config.GLOBAL_ERROR_LOG_FILE_PATH
 PROGRESS_LOG_FILE_PATH = config.PROGRESS_LOG_FILE_PATH 
+
+def check_and_install_dependencies():
+    """
+    Vérifie si les dépendances nécessaires sont installées et les installe si ce n'est pas le cas.
+    """
+    required_packages = {
+        "Pillow": "Pillow",
+        "pytesseract": "pytesseract",
+        "localization": "localization",
+        "numpy": "numpy",
+        "scipy": "scipy",
+        "shapely": "shapely"
+    }
+
+    print("Checking and installing dependancies if needed...")
+
+    for module_name, package_name in required_packages.items():
+        if importlib.util.find_spec(module_name) is None:
+            print(f"The dependancy '{package_name}' ({module_name}) was not found. Installation en progress...")
+            try:
+                # Execute pip for package install
+                # sys.executable est le chemin vers l'interpréteur Python en cours d'exécution
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+                print(f"'{package_name}' installed with success.")
+            except subprocess.CalledProcessError as e:
+                print(f"ERREUR : Impossible to install '{package_name}'. Check manual install with 'pip install {package_name}'.")
+                print(f"Error details : {e}")
+                sys.exit(1)
+        else:
+            print(f"The dependancy '{package_name}' ({module_name}) is already installed.")
 
 # --- Fonction pour journaliser les messages de l'orchestrateur ---
 def log_orchestrator_message(message, level="INFO"):
@@ -264,7 +295,7 @@ def _process_single_chapter_unit(chapter_unit_path, book_folder_name, last_proce
 log_orchestrator_message(_('ORCHESTRATOR_START'), level="INFO")
 log_orchestrator_message(_('GLOBAL_BOOKS_ROOT_DIR_MSG').format(GLOBAL_BOOKS_ROOT_DIR), level="INFO")
 log_orchestrator_message(_('MAX_CONCURRENT_CHAPTER_UNITS_MSG').format(MAX_CONCURRENT_CHAPTER_UNITS), level="INFO")
-
+check_and_install_dependencies()
 
 # Nettoyer les logs précédents au démarrage
 if os.path.exists(ORCHESTRATOR_LOG_FILE_PATH):
