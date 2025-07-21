@@ -438,5 +438,11 @@ def main():
     print("\nProcess complete.")
 
 if __name__ == "__main__":
+    print(f"{YELLOW}######################################################################################")
+    print(f"{YELLOW}#        Allows to convert json chapter files from the lightnovel-crawler            #")
+    print(f"{YELLOW}#        Allows you to specify how to group the chapters in the volumes              #")
+    print(f"{YELLOW}#                                                                                    #")
+    print(f"{YELLOW}#        https://github.com/thibaud200/light_novel/tree/main/convertJson             #")
+    print(f"{YELLOW}######################################################################################{RESET}")
     check_and_install_dependencies()
     main()
