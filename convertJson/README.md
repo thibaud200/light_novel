@@ -3,6 +3,8 @@
 
 <b>🚨 **ATTENTION :** this python script works exclusivaly after you got the json files with lightnovel_crowler see : https://github.com/dipu-bd/lightnovel-crawler for the crawler</b>
 
+⚠️ The script doen't use Calibre for the Epub. The code is based on the `EbookLib` library
+
 the script needs the json files from the crawler (the crawler will automaticaly create the right archetecture for the directories and filesà
 	- meta.json (in the parent directory)
 	- json files on the sub directory "json"
