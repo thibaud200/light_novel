@@ -36,6 +36,24 @@ sudo apt install EbookLib
 
 ## 2. How the scripts work
 
+Input directory hierarchy neeeded (witch is provided by the crawler by default):
+
+```bash
+MainDirectoryBook/                                 <-- script root
+├── epub/
+│   ├── file1-100.epub
+│   ├── file101-200.epub
+│   ├── file201-300.epub
+├── json/
+│   ├── volume 01/
+│   └── volume 02/
+│       ├── 00001.json
+|	├── 00002.json
+│       └── ...
+├── meta.json/
+└── conver.jpg
+```
+
 The script takes parameters some are mandatory others are not:  
 
 1. Mandatory :
